@@ -6,8 +6,7 @@
  * http://www.wtfpl.net/ for more details. */
 """
 from datetime import date, datetime
-from lxml import html
-from requests import get
+import time
 
 standard_github = [
     'https://github.com/bromite/bromite',
@@ -95,19 +94,43 @@ def sendmail(sender, receiver, subject):
         server.quit()
 
 
-for i in range(0, len(standard_github)):
-    lst = []
-    page = get(standard_github[i])
-    tree = html.fromstring(page.content)
-    last_commit = tree.xpath('//relative-time[@class="no-wrap"]/text()')[0].replace(",", "")
-    name = tree.xpath('//a[@data-hovercard-type="organization"]/text()')[0] + \
-        "/" + tree.xpath('//a[@data-pjax="#repo-content-pjax-container"]/text()')[0]
-    today = date.today()
-    datetime_object = datetime.strptime(last_commit, '%b %d %Y').date()
+if __name__ == '__main__':
+    from selenium import webdriver
+    from selenium.webdriver.firefox.service import Service
+    from selenium.webdriver.firefox.options import Options
+    from selenium.webdriver.common.by import By
 
-    res = today - datetime_object
-    result = "Days since last commit:" + str(res.days) + f"; {name} " + danger_level(res.days) + "\n"
-    f = open("test.txt", "a+")
-    f.write(result)
+    PATH = r"C:\Program Files\geckodriver.exe"
 
-sendmail("---", "---", "Test email")
+    choice = input("""
+Enter any key for Standard Mode 
+Press # for Headless Mode(Less reliable)
+:""")
+    start = time.time()
+    if choice == "#":
+        Options = Options()
+        Options.headless = True
+        driver = webdriver.Firefox(service=Service(PATH), options=Options)
+
+    else:
+        driver = webdriver.Firefox(service=Service(PATH))
+
+    print("Scraping in progress.....")
+    for i in range(0, len(standard_github)):
+        driver.get(standard_github[i])
+        commit = driver.find_element(By.TAG_NAME, 'relative-time').get_attribute('title').split(sep=',')[0].replace(",",
+                                                                                                                    "")
+        name = driver.find_element(By.CSS_SELECTOR, '[data-octo-click="hovercard-link-click"]').text + \
+            "/" + driver.find_element(By.CSS_SELECTOR, '[data-pjax="#repo-content-pjax-container"]').text
+        today = date.today()
+        datetime_object = datetime.strptime(commit, '%d %b %Y').date()
+
+        res = today - datetime_object
+        result = "Days since last commit:" + str(res.days) + f"; {name} " + danger_level(res.days) + "\n"
+        f = open("test.txt", "a+")
+        f.write(result)
+
+    driver.quit()
+    sendmail("---", "---", "Test email")
+    end = time.time()
+    print("Time elapsed: ", end - start, " s")
