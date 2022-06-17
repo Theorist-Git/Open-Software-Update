@@ -5,3 +5,6 @@ Change the list with the projects you use, currently only standard GitHub pages 
 I get time.
 
 ![Example.jpeg](example.jpeg "Example")
+
+For some reason the Headless Mode (Browser runs in background), produces unreliable results,
+the scraping fails sometimes when it is used. Pull requests are welcome.
